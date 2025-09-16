@@ -12,9 +12,9 @@ from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
 revision = '4ce39f688dc4'
-down_revision = '7aefe33a8deb'
-branch_labels = None
-depends_on = None
+down_revision: str | None = '7aefe33a8deb'
+branch_labels: str | None = None
+depends_on: str | None = None
 
 
 def upgrade():

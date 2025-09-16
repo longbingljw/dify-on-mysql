@@ -12,9 +12,9 @@ from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
 revision = '37c2bb41f84a'
-down_revision = 'e0e5dc8aa037'
-branch_labels = None
-depends_on = None
+down_revision: str | None = 'e0e5dc8aa037'
+branch_labels: str | None = None
+depends_on: str | None = None
 
 
 def upgrade():
@@ -73,7 +73,7 @@ def upgrade():
     sa.UniqueConstraint('app_id', 'node_id', 'name', name=op.f('workflow_draft_variables_app_id_key'))
     )
     with op.batch_alter_table('workflow_node_executions', schema=None) as batch_op:
-        batch_op.create_index(batch_op.f('workflow_node_executions_tenant_id_idx'), ['tenant_id', 'workflow_id', 'node_id', sa.literal_column('created_at DESC')], unique=False)
+        batch_op.create_index(batch_op.f('workflow_node_executions_tenant_id_idx'), ['tenant_id', 'workflow_id', 'node_id', 'created_at'], unique=False)
 
     with op.batch_alter_table('workflow_runs', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('workflow_run_tenant_app_sequence_idx'))
