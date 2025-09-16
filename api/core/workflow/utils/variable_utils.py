@@ -7,23 +7,23 @@ def append_variables_recursively(
 ):
     """
     Append variables recursively
+    
+    This function adds a variable to the pool and ensures that nested dictionary/object 
+    values can be accessed through the VariablePool's get() method with extended selectors.
+    
+    Note: Since VariablePool.add() only accepts 2-element selectors (node_id, variable_name),
+    this function only stores the top-level variable. Nested access is handled by 
+    VariablePool.get() method's built-in nested attribute navigation.
+    
     :param pool: variable pool to append variables to
     :param node_id: node id
-    :param variable_key_list: variable key list
+    :param variable_key_list: variable key list (only the first element is used for storage)
     :param variable_value: variable value
     :return:
     """
-    pool.add([node_id] + variable_key_list, variable_value)
-
-    # if variable_value is a dict, then recursively append variables
-    if isinstance(variable_value, ObjectSegment):
-        variable_dict = variable_value.value
-    elif isinstance(variable_value, dict):
-        variable_dict = variable_value
-    else:
-        return
-
-    for key, value in variable_dict.items():
-        # construct new key list
-        new_key_list = variable_key_list + [key]
-        append_variables_recursively(pool, node_id=node_id, variable_key_list=new_key_list, variable_value=value)
+    # Only store the top-level variable to comply with VariablePool.add() constraints
+    # The variable_key_list should have exactly one element for the variable name
+    if len(variable_key_list) != 1:
+        raise ValueError(f"variable_key_list must have exactly 1 element, got {len(variable_key_list)}")
+    
+    pool.add([node_id, variable_key_list[0]], variable_value)
