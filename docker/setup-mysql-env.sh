@@ -218,7 +218,7 @@ update_env "VECTOR_STORE" "oceanbase"
 update_env "PIP_MIRROR_URL" "https://pypi.tuna.tsinghua.edu.cn/simple"
 
 # Redis configuration
-USE_REDIS=$(get_user_input "Use Redis for caching?  Y or N:" "Y")
+USE_REDIS=$(get_user_input "Use Redis for caching?(Now suggest to use Redis)  Y or N:" "Y")
 
 if [ "$USE_REDIS" == "Y" ]; then
     print_message "info" "Configuring Redis cache..."

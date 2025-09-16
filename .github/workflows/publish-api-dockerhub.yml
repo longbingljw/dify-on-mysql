@@ -1,13 +1,6 @@
 name: Build and Push API to Docker Hub
 
 on:
-  push:
-    branches:
-      - "main"
-      - "deploy/dev"
-      - "deploy/enterprise"
-    tags:
-      - "*"
   release:
     types: [published, edited]
 
