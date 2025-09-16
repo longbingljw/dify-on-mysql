@@ -76,25 +76,6 @@ class ProviderModelWithStatusEntity(ProviderModel):
         if self.status in error_messages:
             raise ValueError(error_messages[self.status])
 
-    def raise_for_status(self) -> None:
-        """
-        Check model status and raise ValueError if not active.
-
-        :raises ValueError: When model status is not active, with a descriptive message
-        """
-        if self.status == ModelStatus.ACTIVE:
-            return
-
-        error_messages = {
-            ModelStatus.NO_CONFIGURE: "Model is not configured",
-            ModelStatus.QUOTA_EXCEEDED: "Model quota has been exceeded",
-            ModelStatus.NO_PERMISSION: "No permission to use this model",
-            ModelStatus.DISABLED: "Model is disabled",
-        }
-
-        if self.status in error_messages:
-            raise ValueError(error_messages[self.status])
-
 
 class ModelWithProviderEntity(ProviderModelWithStatusEntity):
     """

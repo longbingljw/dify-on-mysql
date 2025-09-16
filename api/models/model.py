@@ -1677,7 +1677,7 @@ class MessageAgentThought(Base):
     message_unit_price = mapped_column(sa.Numeric, nullable=True)
     message_price_unit = mapped_column(sa.Numeric(10, 7), nullable=False, server_default=sa.text("0.001"))
     message_files = mapped_column(adjusted_text(), nullable=True)
-    answer = sa.Column(adjusted_text(), nullable=True)
+    answer: Mapped[str] = mapped_column(adjusted_text(), nullable=True)
     answer_token = mapped_column(sa.Integer, nullable=True)
     answer_unit_price = mapped_column(sa.Numeric, nullable=True)
     answer_price_unit = mapped_column(sa.Numeric(10, 7), nullable=False, server_default=sa.text("0.001"))

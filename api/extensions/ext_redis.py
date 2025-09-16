@@ -43,12 +43,12 @@ class RedisClientWrapper:
                            if the client is not initialized.
     """
 
-    _client: Union[redis.Redis, RedisCluster, None]
+    _client: Union[redis.Redis, RedisCluster, Any, None]
 
     def __init__(self) -> None:
         self._client = None
 
-    def initialize(self, client: Union[redis.Redis, RedisCluster]) -> None:
+    def initialize(self, client: Union[redis.Redis, RedisCluster, Any]) -> None:
         if self._client is None:
             self._client = client
 
@@ -251,25 +251,6 @@ def _create_standalone_client(redis_params: dict[str, Any]) -> Union[redis.Redis
     pool = redis.ConnectionPool(**redis_params)
     client: redis.Redis = redis.Redis(connection_pool=pool)
     return client
-
-
-def init_app(app: DifyApp):
-    """Initialize Redis client and attach it to the app."""
-    global redis_client
-
-    # Determine Redis mode and create appropriate client
-    if dify_config.REDIS_USE_SENTINEL:
-        redis_params = _get_base_redis_params()
-        client = _create_sentinel_client(redis_params)
-    elif dify_config.REDIS_USE_CLUSTERS:
-        client = _create_cluster_client()
-    else:
-        redis_params = _get_base_redis_params()
-        client = _create_standalone_client(redis_params)
-
-    # Initialize the wrapper and attach to app
-    redis_client.initialize(client)
-    app.extensions["redis"] = redis_client
 
 
 def redis_fallback(default_return: Optional[Any] = None):

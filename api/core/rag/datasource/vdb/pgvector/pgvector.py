@@ -3,7 +3,7 @@ import json
 import logging
 import uuid
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, Optional
 
 import psycopg2.errors
 import psycopg2.extras  # type: ignore
@@ -67,6 +67,8 @@ SQL_CREATE_INDEX = """
 CREATE INDEX IF NOT EXISTS embedding_cosine_v1_idx_{index_hash} ON {table_name}
 USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 """
+
+SQL_CREATE_INDEX_PG_BIGM: Optional[str]
 
 if dify_config.SQLALCHEMY_DATABASE_URI_SCHEME == "postgresql":
     SQL_CREATE_INDEX_PG_BIGM = """
@@ -264,7 +266,7 @@ class PGVector(BaseVector):
                 # ref: https://github.com/pgvector/pgvector?tab=readme-ov-file#indexing
                 if dimension <= 2000:
                     cur.execute(SQL_CREATE_INDEX.format(table_name=self.table_name, index_hash=self.index_hash))
-                if self.pg_bigm:
+                if self.pg_bigm and SQL_CREATE_INDEX_PG_BIGM is not None:
                     cur.execute(SQL_CREATE_INDEX_PG_BIGM.format(table_name=self.table_name, index_hash=self.index_hash))
             redis_client.set(collection_exist_cache_key, 1, ex=3600)
 

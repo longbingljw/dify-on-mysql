@@ -4,11 +4,12 @@ from collections.abc import Mapping, Sequence
 from enum import StrEnum
 from typing import Any, ClassVar
 
-from sqlalchemy import Engine, orm
+from sqlalchemy import Engine, func, orm
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.sql.expression import and_, or_
+from typing import Union
 
 from configs import dify_config
 from core.app.entities.app_invoke_entities import InvokeFrom
@@ -443,6 +444,9 @@ def _batch_upsert_draft_variable(
 ) -> None:
     if not draft_vars:
         return None
+
+    # Declare stmt variable with Union type to handle both PostgreSQL and MySQL inserts
+    stmt: Union[insert, mysql_insert] = None  # type: ignore
     # Although we could use SQLAlchemy ORM operations here, we choose not to for several reasons:
     #
     # 1. The variable saving process involves writing multiple rows to the
@@ -486,27 +490,28 @@ def _batch_upsert_draft_variable(
         else:
             raise Exception("Invalid value for update policy.")
     elif dify_config.SQLALCHEMY_DATABASE_URI_SCHEME == "mysql+pymysql":
-        stmt = mysql_insert(WorkflowDraftVariable).values([_model_to_insertion_dict(v) for v in draft_vars])
+        mysql_stmt = mysql_insert(WorkflowDraftVariable).values([_model_to_insertion_dict(v) for v in draft_vars])
         if policy == _UpsertPolicy.OVERWRITE:
-            # Index_elements needn't to be specified in mysql dialect. Conflict was determined 
+            # Index_elements needn't to be specified in mysql dialect. Conflict was determined
             # by unique_key.
-            stmt = stmt.on_duplicate_key_update(
-                # 更新字段为“要插入的新值”
-                created_at=stmt.inserted.created_at,
-                updated_at=stmt.inserted.updated_at,
-                last_edited_at=stmt.inserted.last_edited_at,
-                description=stmt.inserted.description,
-                value_type=stmt.inserted.value_type,
-                value=stmt.inserted.value,
-                visible=stmt.inserted.visible,
-                editable=stmt.inserted.editable,
-                node_execution_id=stmt.inserted.node_execution_id,
+            mysql_stmt = mysql_stmt.on_duplicate_key_update(
+                # 更新字段为"要插入的新值"
+                created_at=func.now(),
+                updated_at=func.now(),
+                last_edited_at=func.now(),
+                description=func.values(WorkflowDraftVariable.__table__.c.description),
+                value_type=func.values(WorkflowDraftVariable.__table__.c.value_type),
+                value=func.values(WorkflowDraftVariable.__table__.c.value),
+                visible=func.values(WorkflowDraftVariable.__table__.c.visible),
+                editable=func.values(WorkflowDraftVariable.__table__.c.editable),
+                node_execution_id=func.values(WorkflowDraftVariable.__table__.c.node_execution_id),
             )
         elif policy == _UpsertPolicy.IGNORE:
             # MySQL: INSERT IGNORE（忽略冲突，不报错）
-            stmt = stmt.prefix_with("IGNORE")
+            mysql_stmt = mysql_stmt.prefix_with("IGNORE")
         else:
             raise Exception("Invalid value for update policy.")
+        stmt = mysql_stmt
     else:
         raise Exception(f"Invalid SQLALCHEMY_DATABASE_URI_SCHEME: {dify_config.SQLALCHEMY_DATABASE_URI_SCHEME}")
     session.execute(stmt)
