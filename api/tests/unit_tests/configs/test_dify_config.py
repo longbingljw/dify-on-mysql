@@ -48,6 +48,142 @@ def test_dify_config(monkeypatch):
 
 # NOTE: If there is a `.env` file in your Workspace, this test might not succeed as expected.
 # This is due to `pymilvus` loading all the variables from the `.env` file into `os.environ`.
+
+
+# MySQL database configuration tests
+def test_mysql_config(monkeypatch):
+    """Test MySQL database configuration."""
+    # clear system environment variables
+    os.environ.clear()
+
+    # Set MySQL environment variables (matching setup-mysql-env.sh)
+    monkeypatch.setenv("CONSOLE_API_URL", "https://example.com")
+    monkeypatch.setenv("CONSOLE_WEB_URL", "https://example.com")
+    monkeypatch.setenv("SQLALCHEMY_DATABASE_URI_SCHEME", "mysql+pymysql")
+    monkeypatch.setenv("DB_USERNAME", "root")
+    monkeypatch.setenv("DB_PASSWORD", "difyai123456")
+    monkeypatch.setenv("DB_HOST", "localhost")
+    monkeypatch.setenv("DB_PORT", "2881")
+    monkeypatch.setenv("DB_DATABASE", "dify")
+
+    # load config
+    config = DifyConfig()
+
+    # Test MySQL database URI generation
+    assert config.SQLALCHEMY_DATABASE_URI_SCHEME == "mysql+pymysql"
+    assert "mysql+pymysql://root:difyai123456@localhost:2881/dify" in str(config.SQLALCHEMY_DATABASE_URI)
+
+
+def test_mysql_engine_options(monkeypatch):
+    """Test MySQL engine options configuration."""
+    # clear system environment variables
+    os.environ.clear()
+
+    # Set MySQL environment variables
+    monkeypatch.setenv("CONSOLE_API_URL", "https://example.com")
+    monkeypatch.setenv("CONSOLE_WEB_URL", "https://example.com")
+    monkeypatch.setenv("SQLALCHEMY_DATABASE_URI_SCHEME", "mysql+pymysql")
+    monkeypatch.setenv("DB_USERNAME", "root")
+    monkeypatch.setenv("DB_PASSWORD", "difyai123456")
+    monkeypatch.setenv("DB_HOST", "localhost")
+    monkeypatch.setenv("DB_PORT", "2881")
+    monkeypatch.setenv("DB_DATABASE", "dify")
+
+    # Create Flask config
+    flask_app = Flask("app")
+    flask_app.config.from_mapping(DifyConfig().model_dump())
+    config = flask_app.config
+
+    # Test MySQL engine options (should be empty dict for non-postgresql)
+    assert config["SQLALCHEMY_ENGINE_OPTIONS"] == {}
+
+
+def test_mysql_flask_config(monkeypatch):
+    """Test MySQL configuration in Flask context."""
+    flask_app = Flask("app")
+    # clear system environment variables
+    os.environ.clear()
+
+    # Set MySQL environment variables
+    monkeypatch.setenv("CONSOLE_API_URL", "https://example.com")
+    monkeypatch.setenv("CONSOLE_WEB_URL", "https://example.com")
+    monkeypatch.setenv("SQLALCHEMY_DATABASE_URI_SCHEME", "mysql+pymysql")
+    monkeypatch.setenv("DB_USERNAME", "root")
+    monkeypatch.setenv("DB_PASSWORD", "difyai123456")
+    monkeypatch.setenv("DB_HOST", "localhost")
+    monkeypatch.setenv("DB_PORT", "2881")
+    monkeypatch.setenv("DB_DATABASE", "dify")
+    monkeypatch.setenv("WEB_API_CORS_ALLOW_ORIGINS", "http://127.0.0.1:3000,*")
+    monkeypatch.setenv("CODE_EXECUTION_ENDPOINT", "http://127.0.0.1:8194/")
+
+    flask_app.config.from_mapping(DifyConfig().model_dump())
+    config = flask_app.config
+
+    # Test MySQL database URI
+    assert config["SQLALCHEMY_DATABASE_URI"] == "mysql+pymysql://root:difyai123456@localhost:2881/dify"
+
+    # Test CORS configuration
+    assert config["WEB_API_CORS_ALLOW_ORIGINS"] == ["http://127.0.0.1:3000", "*"]
+
+    # Test code execution endpoint
+    assert str(config["CODE_EXECUTION_ENDPOINT"]) == "http://127.0.0.1:8194/"
+
+
+def test_mysql_db_extras_options(monkeypatch):
+    """Test MySQL DB_EXTRAS options merging."""
+    # clear system environment variables
+    os.environ.clear()
+
+    # Set MySQL environment variables with extras
+    monkeypatch.setenv("CONSOLE_API_URL", "https://example.com")
+    monkeypatch.setenv("CONSOLE_WEB_URL", "https://example.com")
+    monkeypatch.setenv("SQLALCHEMY_DATABASE_URI_SCHEME", "mysql+pymysql")
+    monkeypatch.setenv("DB_USERNAME", "root")
+    monkeypatch.setenv("DB_PASSWORD", "difyai123456")
+    monkeypatch.setenv("DB_HOST", "localhost")
+    monkeypatch.setenv("DB_PORT", "2881")
+    monkeypatch.setenv("DB_DATABASE", "dify")
+    monkeypatch.setenv("DB_EXTRAS", "charset=utf8mb4&autocommit=true")
+
+    # Create config
+    config = DifyConfig()
+
+    # Get engine options
+    engine_options = config.SQLALCHEMY_ENGINE_OPTIONS
+
+    # For MySQL, engine options should be empty (non-postgresql)
+    assert engine_options == {}
+
+    # Test DB_EXTRAS is included in URI
+    uri_str = str(config.SQLALCHEMY_DATABASE_URI)
+    assert "charset=utf8mb4" in uri_str
+    assert "autocommit=true" in uri_str
+
+
+def test_mysql_oceanbase_config(monkeypatch):
+    """Test MySQL configuration for OceanBase."""
+    # clear system environment variables
+    os.environ.clear()
+
+    # Set OceanBase environment variables
+    monkeypatch.setenv("CONSOLE_API_URL", "https://example.com")
+    monkeypatch.setenv("CONSOLE_WEB_URL", "https://example.com")
+    monkeypatch.setenv("SQLALCHEMY_DATABASE_URI_SCHEME", "mysql+pymysql")
+    monkeypatch.setenv("DB_USERNAME", "root@test")
+    monkeypatch.setenv("DB_PASSWORD", "difyai123456")
+    monkeypatch.setenv("DB_HOST", "oceanbase")
+    monkeypatch.setenv("DB_PORT", "2881")
+    monkeypatch.setenv("DB_DATABASE", "dify")
+
+    # load config
+    config = DifyConfig()
+
+    # Test OceanBase connection string
+    assert config.SQLALCHEMY_DATABASE_URI_SCHEME == "mysql+pymysql"
+    uri_str = str(config.SQLALCHEMY_DATABASE_URI)
+    assert "mysql+pymysql://root%40test:difyai123456@oceanbase:2881/dify" in uri_str
+
+
 def test_flask_configs(monkeypatch):
     flask_app = Flask("app")
     # clear system environment variables
