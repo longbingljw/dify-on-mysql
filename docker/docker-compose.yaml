@@ -825,7 +825,7 @@ services:
     volumes:
       - ./volumes/plugin_daemon:/app/storage
     depends_on:
-      db:
+      oceanbase:
         condition: service_healthy
 
   # ssrf_proxy server
