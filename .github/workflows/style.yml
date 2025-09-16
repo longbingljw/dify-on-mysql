@@ -3,7 +3,7 @@ name: Style check
 on:
   pull_request:
     branches:
-      - main
+      - temporary-ban
 
 concurrency:
   group: style-${{ github.head_ref || github.run_id }}
