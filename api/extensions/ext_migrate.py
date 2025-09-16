@@ -10,6 +10,8 @@ def init_app(app: DifyApp):
     # Migration directory has to be mannually specified since mergeing 1.8.0, 
     # haven't found why yet
     if "mysql" in dify_config.SQLALCHEMY_DATABASE_URI_SCHEME:
-        directory="migrations-mysql"
+        directory = "migrations-mysql"
+    else:
+        directory = "migrations"
 
     flask_migrate.Migrate(app, db, directory=directory)
