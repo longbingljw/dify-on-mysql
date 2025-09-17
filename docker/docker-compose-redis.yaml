@@ -709,6 +709,8 @@ services:
                -c 'effective_cache_size=${POSTGRES_EFFECTIVE_CACHE_SIZE:-4096MB}'
     volumes:
       - ./volumes/db/data:/var/lib/postgresql/data
+    profiles:
+      - postgresql
     healthcheck:
       test:
         [
