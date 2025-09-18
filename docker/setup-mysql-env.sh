@@ -217,47 +217,15 @@ update_env "COMPOSE_PROFILES" "$COMPOSE_PROFILES"
 update_env "VECTOR_STORE" "oceanbase"
 update_env "PIP_MIRROR_URL" "https://pypi.tuna.tsinghua.edu.cn/simple"
 
-# Redis configuration
-USE_REDIS=$(get_user_input "Use Redis for caching?(Now suggest to use Redis)  Y or N:" "Y")
+# Redis configuration (Using Redis as cache)
+print_message "info" "Configuring Redis cache..."
 
-if [ "$USE_REDIS" == "Y" ]; then
-    print_message "info" "Configuring Redis cache..."
-    
-    # Check if docker-compose-redis.yaml exists
-    if [ -f "docker-compose-redis.yaml" ]; then
-        print_message "info" "Found docker-compose-redis.yaml, copying to docker-compose.yaml"
-        cp docker-compose-redis.yaml docker-compose.yaml
-        
-        # Set environment to use Redis
-        update_env "CACHE_SCHEME" "redis"
-        update_env "CELERY_BROKER_URL" "redis://:difyai123456@redis:6379/1"
-        
-        print_message "success" "Redis cache configuration completed."
-        print_message "info" "Use 'docker-compose up -d' to start services with Redis."
-    else
-        print_message "error" "ERROR: docker-compose-redis.yaml not found!"
-        print_message "info" "Please create docker-compose-redis.yaml with Redis service configuration."
-        exit 1
-    fi
-    update_env "OCEANBASE_CLUSTER_NAME" "difyai-redis"
-else
-    print_message "info" "Using MySQL cache as default."
-    # Copy MySQL configuration to docker-compose.yaml
-    if [ -f "docker-compose-mysql.yaml" ]; then
-        print_message "info" "Found docker-compose-mysql.yaml, copying to docker-compose.yaml"
-        cp docker-compose-mysql.yaml docker-compose.yaml
-    fi
-    print_message "info" "Using MySQL cache as default."
-    update_env "CACHE_SCHEME" "mysql"
-    
-    
-    # Update CELERY_BROKER_URL for MySQL cache with proper URL encoding
-    # URL encode the username to handle special characters like @
-    ENCODED_USERNAME=$(echo "$DB_USERNAME" | sed 's/@/%40/g')
-    CELERY_BROKER_URL="sqla+mysql+pymysql://${ENCODED_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}"
-    update_env "CELERY_BROKER_URL" "$CELERY_BROKER_URL"
-    print_message "success" "CELERY_BROKER_URL updated for MySQL cache."
-fi
+# Set environment to use Redis
+update_env "CACHE_SCHEME" "redis"
+update_env "CELERY_BROKER_URL" "redis://:difyai123456@redis:6379/1"
+
+print_message "success" "Redis cache configuration completed."
+update_env "OCEANBASE_CLUSTER_NAME" "difyai-redis"
 
 print_message "success" "\nDatabase parameters are written into .env successfully."
 
