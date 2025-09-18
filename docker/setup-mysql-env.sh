@@ -225,7 +225,6 @@ update_env "CACHE_SCHEME" "redis"
 update_env "CELERY_BROKER_URL" "redis://:difyai123456@redis:6379/1"
 
 print_message "success" "Redis cache configuration completed."
-update_env "OCEANBASE_CLUSTER_NAME" "difyai-redis"
 
 print_message "success" "\nDatabase parameters are written into .env successfully."
 
