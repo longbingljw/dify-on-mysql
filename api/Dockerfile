@@ -6,20 +6,20 @@ WORKDIR /app/api
 # Install uv
 ENV UV_VERSION=0.8.9
 
-RUN pip install --no-cache-dir uv==${UV_VERSION}
+RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple uv==${UV_VERSION}
 
 
 FROM base AS packages
 
 # if you located in China, you can use aliyun mirror to speed up
-# RUN sed -i 's@deb.debian.org@mirrors.aliyun.com@g' /etc/apt/sources.list.d/debian.sources
+RUN sed -i 's@deb.debian.org@mirrors.aliyun.com@g' /etc/apt/sources.list.d/debian.sources
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends gcc g++ libc-dev libffi-dev libgmp-dev libmpfr-dev libmpc-dev
 
 # Install Python dependencies
 COPY pyproject.toml uv.lock ./
-RUN uv sync --locked --no-dev
+RUN uv sync --index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 # production stage
 FROM base AS production
@@ -44,6 +44,8 @@ ENV PYTHONIOENCODING=utf-8
 
 WORKDIR /app/api
 
+RUN sed -i 's@deb.debian.org@mirrors.aliyun.com@g' /etc/apt/sources.list.d/debian.sources
+
 RUN \
     apt-get update \
     # Install dependencies
@@ -67,7 +69,12 @@ COPY --from=packages ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
 
 # Download nltk data
-RUN python -c "import nltk; nltk.download('punkt'); nltk.download('averaged_perceptron_tagger')"
+RUN mkdir -p /app/api/nltk_data && \
+    python -c "import nltk; \
+        downloader = nltk.downloader.Downloader('https://mirrors.tuna.tsinghua.edu.cn/nltk_data/'); \
+        downloader.download('punkt', download_dir='/app/api/nltk_data'); \
+        downloader.download('averaged_perceptron_tagger', download_dir='/app/api/nltk_data'); \
+    "
 
 ENV TIKTOKEN_CACHE_DIR=/app/api/.tiktoken_cache
 
